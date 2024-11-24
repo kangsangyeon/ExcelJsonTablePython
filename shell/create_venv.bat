@@ -1,0 +1,1 @@
+python.exe -m venv "%~dp0.venv"
