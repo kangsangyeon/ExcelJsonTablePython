@@ -1,64 +1,32 @@
+import ast
 import json
 import os
 from pathlib import Path
 
 import openpyxl
 
-
-def parse_type(type_str):
-    """타입 문자열을 실제 Python 타입으로 변환하는 함수."""
-    type_mappings = {
-        'Integer': int,
-        'String': str,
-        'Float': float,
-        'Boolean': bool,
-        'Array': list,
-        'Object': dict
-    }
-    return type_mappings.get(type_str, str)
-
-
-def get_array_from_string(value):
-    """문자열을 배열로 변환하는 함수."""
-    if isinstance(value, str):
-        return [v.strip().strip('"') for v in value.split(',')]
-    elif isinstance(value, (int, float)):
-        return [value]
-    else:
-        raise ValueError(f"'{value}'는 배열로 변환할 수 없습니다.")
-
-
-def get_object_from_string(value):
-    """문자열을 JSON 객체로 변환하는 함수."""
-    try:
-        return json.loads(value)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"'{value}'는 유효한 JSON 형식이 아닙니다: {e}")
-
-
-def is_valid_json(value):
-    """값이 올바른 JSON 형식인지 확인하는 함수."""
-    try:
-        json.loads(value)
-        return True
-    except (ValueError, TypeError):
-        return False
+type_mappings = {
+    'Integer': int,
+    'String': str,
+    'Float': float,
+    'Boolean': bool,
+    'Array': list,
+    'Object': dict
+}
 
 
 def validate_and_convert_value(value, expected_type):
-    """값이 기대한 타입인지 검증하고, 타입에 맞게 변환하는 함수."""
-    if value is None:
-        return None
-
+    """
+    값이 기대한 타입인지 검증하고, 타입에 맞게 변환하는 함수.
+    """
     try:
+        if value is None:
+            return None
         if expected_type == list:
-            array_value = get_array_from_string(value)
-            return array_value if array_value else None
-        elif expected_type == dict:
-            if isinstance(value, str) and is_valid_json(value):
-                return get_object_from_string(value)
-            else:
-                return value
+            arr_str = '[' + str(value).replace('\n', ',') + ']'
+            return ast.literal_eval(arr_str)
+        if expected_type == dict:
+            return ast.literal_eval(value)
         return expected_type(value)
     except (ValueError, TypeError) as e:
         raise ValueError(f"값 '{value}'는 기대한 타입 '{expected_type.__name__}'과 일치하지 않습니다: {e}")
@@ -97,9 +65,11 @@ def export_excel_to_json(excel_file_path):
         for cell in sheet[2]:
             if cell.value is None:
                 break
-            header_name, column_type = cell.value.split(":")
-            headers.append(header_name.strip())
-            parsed_headers.append((header_name.strip(), parse_type(column_type.strip())))
+            header_name, column_type_name = cell.value.split(":")
+            header_name = header_name.strip()
+            column_type = type_mappings.get(column_type_name.strip())
+            headers.append(header_name)
+            parsed_headers.append((header_name, column_type))
 
         data_list = []
 
@@ -127,6 +97,8 @@ def export_excel_to_json_dir(directory):
     :param directory: Excel 파일들이 위치한 디렉토리 경로
     """
     for filename in os.listdir(directory):
+        if filename.startswith('~$'):
+            continue
         if filename.endswith(('.xlsx', '.xlsm', '.xltx')):
             file_path = os.path.join(directory, filename)
             try:
