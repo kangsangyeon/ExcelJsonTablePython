@@ -6,9 +6,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 import const
+import utils
 from edit_reg import toggle_context_menu_item
 from exporter import export_excel_to_json_dir
-from src import utils
 
 
 # GUI 생성 함수

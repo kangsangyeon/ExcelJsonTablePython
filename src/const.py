@@ -1,8 +1,9 @@
+import os
 from pathlib import Path
 
 app_name = "ExcelJsonTablePython"
 app_package = f"com.sanyoni.{app_name}"
-app_cache_dir = f"%LOCALAPPDATA%/Low/{app_package}"
+app_cache_dir = os.path.expandvars(f"%LOCALAPPDATA%/Low/{app_package}")
 app_title = "Excel Json Table | All Excel Files in Folder Convert to json"
 
 reg_key_name = f"Directory\\Background\\shell\\{app_name}"
